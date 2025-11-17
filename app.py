@@ -59,33 +59,3 @@ st.write("Spring Position")
 st.markdown("---")
 st.subheader("Spring Simulation")
 
-import numpy as np
-
-mass = st.slider("Mass", 1, 10, 5, key="spring_mass")
-k = st.slider("Spring Constant", 10, 100, 50, key="spring_k")
-
-# Spring physics
-omega = np.sqrt(k / mass)
-T = 2 * np.pi / omega
-
-st.write(f"Natural Frequency: {omega:.2f} rad/s")
-st.write(f"Period: {T:.2f} seconds")
-
-# Create spring positions for one period
-t = np.linspace(0, T, 20)
-x = np.sin(omega * t)
-
-# Display spring frames
-st.write("**Spring Motion Over One Period:**")
-cols = st.columns(4)
-for i in range(min(4, len(x))):
-    with cols[i]:
-        pos = x[i]
-        # Visual representation
-        if pos > 0.5:
-            st.write("⬇️ Stretched")
-        elif pos < -0.5:
-            st.write("⬆️ Compressed")
-        else:
-            st.write("⚫ Balanced")
-        st.write(f"Pos: {pos:.2f}")
