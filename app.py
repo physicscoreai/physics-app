@@ -55,8 +55,6 @@ st.subheader("Spring Motion")
 st.progress(0.5)
 st.write("Spring Position")
 
-
- REAL-TIME SPRING ANIMATION
 st.markdown("---")
 st.subheader("Real-Time Spring Animation")
 
