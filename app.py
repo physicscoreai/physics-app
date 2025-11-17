@@ -171,8 +171,3 @@ st.write("""
 - **Purpose**: Demonstrates how AI can approximate complex physics calculations
 - **Accuracy**: Shows the difference between AI prediction and exact physics
 """)
-
-# PYTHON SPRING SIMULATION
-st.markdown("---")
-st.subheader("Spring Simulation")
-
