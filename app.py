@@ -55,51 +55,44 @@ st.subheader("Spring Motion")
 st.progress(0.5)
 st.write("Spring Position")
 
+# SPRING VISUALIZATION
 st.markdown("---")
-st.subheader("Real-Time Spring Animation")
+st.subheader("Spring Visualization")
 
 mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0, key="mass_spring")
 spring_constant = st.slider("Spring Constant (N/m)", 1, 100, 10, key="spring_const")
+displacement = st.slider("Spring Displacement", -1.0, 1.0, 0.0, 0.1)
 
-# Calculate physics
-omega = np.sqrt(spring_constant / mass)
-period = 2 * np.pi / omega
+# Calculate force
+force = -spring_constant * displacement
 
-st.write(f"Oscillation Period: {period:.2f} seconds")
+# Draw spring based on displacement
+st.write("**Spring Position:**")
 
-# Real-time animation
+if displacement > 0:
+    # Spring stretched down
+    st.code(f"""
+    🟦 Wall
+    {'│' * 8}
+    ⚫ Mass (stretched down)
+    Force: {force:.1f} N upward
+    """)
+elif displacement < 0:
+    # Spring compressed up
+    st.code(f"""
+    🟦 Wall
+    ⚫ Mass (compressed up)
+    {'│' * 8}
+    Force: {force:.1f} N downward
+    """)
+else:
+    # Spring at rest
+    st.code(f"""
+    🟦 Wall
+    {'│' * 8}
+    ⚫ Mass (at rest)
+    Force: {force:.1f} N
+    """)
 
-if st.button("Start Spring Animation"):
-    spring_placeholder = st.empty()
-    progress_placeholder = st.empty()
-    text_placeholder = st.empty()
-    
-    start_time = time.time()
-    
-    while True:
-        # Calculate current time in oscillation
-        current_time = time.time() - start_time
-        position = np.sin(omega * current_time)
-        
-        # Convert to progress bar value (0 to 1)
-        progress_val = (position + 1) / 2
-        
-        # Update animation
-        spring_placeholder.markdown(f"""
-        <div style="text-align: center; font-size: 20px;">
-        🟦<br>
-        {'│' * int(10 + position * 5)}<br>
-        ⚫ Mass<br>
-        Position: {position:.2f}
-        </div>
-        """, unsafe_allow_html=True)
-        
-        progress_placeholder.progress(progress_val)
-        text_placeholder.write(f"Time: {current_time:.1f}s | Position: {position:.2f}")
-        
-        # Small delay
-        time.sleep(0.1)
-        
-        # Stop after 10 seconds or if user refreshes
-        if current_time > 10:
-            break
+st.write(f"**Spring Force: {force:.1f} N**")
+st.write(f"*Move the displacement slider to see the spring change!*")
