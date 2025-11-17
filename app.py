@@ -200,31 +200,41 @@ st.write("**Multi-angle Test Results:**")
 for angle, ai_pred, actual, acc in results:
     st.write(f"**{angle}°**: AI: {ai_pred:.1f}m | Physics: {actual:.1f}m | Accuracy: {acc:.1f}%")
 
-
+# fit_projectile_from_csv.py
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
+import sys
 
-# Model function
-def projectile(x, v0, theta, g):
-    theta_rad = np.radians(theta)
-    return np.tan(theta_rad)*x - (g/(2*v0**2*np.cos(theta_rad)**2))*x**2
+def projectile(x, v0, theta_deg, g):
+    theta = np.radians(theta_deg)
+    return np.tan(theta)*x - (g/(2*v0**2 * np.cos(theta)**2))*x**2
 
-# Load data
-df = pd.read_csv("data.csv")
-x = df["x"].values
-y = df["y"].values
+if len(sys.argv) < 2:
+    print("Usage: python fit_projectile_from_csv.py data.csv")
+    sys.exit(1)
 
-# Fit model to data
-params, cov = curve_fit(projectile, x, y, p0=[30, 40, 9.8])
+df = pd.read_csv(sys.argv[1])
+# Accept either t,x,y or x,y
+if set(['x','y']).issubset(df.columns):
+    x = df['x'].values
+    y = df['y'].values
+else:
+    raise ValueError("CSV must contain columns 'x' and 'y'")
+
+# sort by x to be safe
+sort_idx = np.argsort(x)
+x = x[sort_idx]; y = y[sort_idx]
+
+p0 = [30.0, 40.0, 9.8]  # initial guesses: v0, theta_deg, g
+params, cov = curve_fit(projectile, x, y, p0=p0, maxfev=5000)
 v0_est, theta_est, g_est = params
-
-# Evaluate error
-y_pred = projectile(x, v0_est, theta_est, g_est)
+y_pred = projectile(x, *params)
 rmse = np.sqrt(np.mean((y - y_pred)**2))
 
-print("\nEstimated Parameters:")
-print(f"Initial Velocity: {v0_est:.2f} m/s")
-print(f"Launch Angle: {theta_est:.2f}°")
-print(f"Gravity: {g_est:.2f} m/s²")
-print(f"RMSE Error: {rmse:.4f}")
+print(f"Estimated v0 = {v0_est:.3f} m/s")
+print(f"Estimated theta = {theta_est:.3f} deg")
+print(f"Estimated g = {g_est:.3f} m/s^2")
+print(f"RMSE = {rmse:.4f} m")
+
+
