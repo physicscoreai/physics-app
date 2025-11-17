@@ -199,3 +199,32 @@ for angle in test_angles:
 st.write("**Multi-angle Test Results:**")
 for angle, ai_pred, actual, acc in results:
     st.write(f"**{angle}°**: AI: {ai_pred:.1f}m | Physics: {actual:.1f}m | Accuracy: {acc:.1f}%")
+
+
+import numpy as np
+import pandas as pd
+from scipy.optimize import curve_fit
+
+# Model function
+def projectile(x, v0, theta, g):
+    theta_rad = np.radians(theta)
+    return np.tan(theta_rad)*x - (g/(2*v0**2*np.cos(theta_rad)**2))*x**2
+
+# Load data
+df = pd.read_csv("data.csv")
+x = df["x"].values
+y = df["y"].values
+
+# Fit model to data
+params, cov = curve_fit(projectile, x, y, p0=[30, 40, 9.8])
+v0_est, theta_est, g_est = params
+
+# Evaluate error
+y_pred = projectile(x, v0_est, theta_est, g_est)
+rmse = np.sqrt(np.mean((y - y_pred)**2))
+
+print("\nEstimated Parameters:")
+print(f"Initial Velocity: {v0_est:.2f} m/s")
+print(f"Launch Angle: {theta_est:.2f}°")
+print(f"Gravity: {g_est:.2f} m/s²")
+print(f"RMSE Error: {rmse:.4f}")
