@@ -59,111 +59,136 @@ st.write("Spring Position")
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
 
 # AI TRAJECTORY PREDICTION SECTION
 st.markdown("---")
 st.subheader("🧠 AI Trajectory Prediction")
 
-# Generate training data for the AI model
-@st.cache_data
-def generate_training_data():
-    data = []
-    for v in range(1, 101):  # Velocity from 1-100 m/s
-        for angle in range(1, 91):  # Angle from 1-90 degrees
-            # Physics calculations for training data
-            angle_rad = np.radians(angle)
-            time_flight = (2 * v * np.sin(angle_rad)) / 9.8
-            max_height = (v * np.sin(angle_rad))**2 / (2 * 9.8)
-            range_val = (v**2 * np.sin(2 * angle_rad)) / 9.8
-            
-            data.append([v, angle, time_flight, max_height, range_val])
-    
-    return pd.DataFrame(data, columns=['velocity', 'angle', 'time_flight', 'max_height', 'range'])
-
-# Train the AI model
+# Simple AI model training - FIXED
 @st.cache_resource
-def train_ai_model():
-    df = generate_training_data()
+def train_simple_ai_model():
+    # Create simple training data
+    np.random.seed(42)
+    n_samples = 1000
     
-    # Features: velocity and angle
+    velocities = np.random.uniform(1, 100, n_samples)
+    angles = np.random.uniform(1, 90, n_samples)
+    
+    # Calculate actual ranges using physics
+    ranges = []
+    for v, angle in zip(velocities, angles):
+        angle_rad = np.radians(angle)
+        range_val = (v**2 * np.sin(2 * angle_rad)) / 9.8
+        ranges.append(range_val)
+    
+    # Create DataFrame
+    df = pd.DataFrame({
+        'velocity': velocities,
+        'angle': angles,
+        'range': ranges
+    })
+    
+    # Train model
     X = df[['velocity', 'angle']]
-    # Target: range (distance)
     y = df['range']
     
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = RandomForestRegressor(n_estimators=50, random_state=42, max_depth=10)
+    model.fit(X, y)
     
-    # Train Random Forest model
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    
-    # Calculate accuracy
-    y_pred = model.predict(X_test)
-    accuracy = mean_absolute_error(y_test, y_pred)
-    
-    return model, accuracy
+    return model
 
 # Load AI model
-model, model_accuracy = train_ai_model()
+try:
+    ai_model = train_simple_ai_model()
+    st.success("✅ AI Model Trained Successfully!")
+    
+    # User input for AI prediction
+    st.write("### Test AI Prediction")
+    col1, col2 = st.columns(2)
 
-st.write(f"**AI Model Accuracy:** ±{model_accuracy:.2f} meters")
+    with col1:
+        ai_velocity = st.slider("Velocity for AI (m/s)", 1, 100, 50, key="ai_vel")
 
-# User input for AI prediction
-st.write("### Test AI Prediction")
-col1, col2 = st.columns(2)
+    with col2:
+        ai_angle = st.slider("Angle for AI (degrees)", 1, 90, 45, key="ai_ang")
 
-with col1:
-    ai_velocity = st.slider("Velocity for AI (m/s)", 1, 100, 50, key="ai_velocity")
+    # Get AI prediction
+    if st.button("Get AI Prediction"):
+        ai_prediction = ai_model.predict([[ai_velocity, ai_angle]])[0]
+        
+        # Calculate actual physics result
+        angle_rad = np.radians(ai_angle)
+        actual_range = (ai_velocity**2 * np.sin(2 * angle_rad)) / 9.8
+        
+        # Display results
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("🤖 AI Prediction", f"{ai_prediction:.1f} m")
+            
+        with col2:
+            st.metric("📐 Physics Calculation", f"{actual_range:.1f} m")
+            
+        with col3:
+            difference = abs(ai_prediction - actual_range)
+            st.metric("📊 Difference", f"{difference:.2f} m")
+        
+        # Show accuracy
+        accuracy_percent = max(0, 100 - (difference / actual_range * 100))
+        st.progress(accuracy_percent / 100)
+        st.write(f"**AI Accuracy: {accuracy_percent:.1f}%**")
+        
+        # Simple visualization
+        st.write("### 📈 Comparison")
+        fig, ax = plt.subplots(figsize=(8, 4))
+        methods = ['AI Prediction', 'Physics Calculation']
+        values = [ai_prediction, actual_range]
+        colors = ['#FF6B6B', '#4ECDC4']
+        
+        bars = ax.bar(methods, values, color=colors, alpha=0.7)
+        ax.set_ylabel('Distance (meters)')
+        ax.set_title('AI vs Physics Calculation')
+        
+        # Add value labels on bars
+        for bar, value in zip(bars, values):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height + 5,
+                   f'{value:.1f}m', ha='center', va='bottom', fontweight='bold')
+        
+        st.pyplot(fig)
+        
+except Exception as e:
+    st.error(f"❌ AI Model Error: {str(e)}")
+    st.write("Trying alternative approach...")
+    
+    # Fallback: Simple linear approximation
+    st.write("### 🔧 Using Simple AI Approximation")
+    ai_velocity = st.slider("Velocity (m/s)", 1, 100, 50, key="simple_vel")
+    ai_angle = st.slider("Angle (degrees)", 1, 90, 45, key="simple_ang")
+    
+    # Simple AI-like approximation
+    simple_ai_pred = (ai_velocity ** 2 * ai_angle) / 100  # Simplified formula
+    actual_range = (ai_velocity**2 * np.sin(2 * np.radians(ai_angle))) / 9.8
+    
+    st.metric("Simple AI Estimate", f"{simple_ai_pred:.1f} m")
+    st.metric("Actual Physics", f"{actual_range:.1f} m")
 
-with col2:
-    ai_angle = st.slider("Angle for AI (degrees)", 1, 90, 45, key="ai_angle")
-
-# Get AI prediction
-ai_prediction = model.predict([[ai_velocity, ai_angle]])[0]
-
-# Calculate actual physics result for comparison
-angle_rad = np.radians(ai_angle)
-actual_range = (ai_velocity**2 * np.sin(2 * angle_rad)) / 9.8
-
-# Display results
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric("🤖 AI Prediction", f"{ai_prediction:.1f} m")
-
-with col2:
-    st.metric("📐 Physics Calculation", f"{actual_range:.1f} m")
-
-with col3:
-    difference = abs(ai_prediction - actual_range)
-    st.metric("📊 Difference", f"{difference:.1f} m")
-
-# Visual comparison
-st.write("### 📈 AI vs Physics Comparison")
-comparison_data = pd.DataFrame({
-    'Method': ['AI Prediction', 'Physics Calculation'],
-    'Distance (m)': [ai_prediction, actual_range]
-})
-
-fig, ax = plt.subplots()
-bars = ax.bar(comparison_data['Method'], comparison_data['Distance (m)'], color=['#FF6B6B', '#4ECDC4'])
-ax.set_ylabel('Distance (meters)')
-ax.set_title('AI vs Traditional Physics Calculation')
-
-# Add value labels on bars
-for bar in bars:
-    height = bar.get_height()
-    ax.text(bar.get_x() + bar.get_width()/2., height,
-            f'{height:.1f}m', ha='center', va='bottom')
-
-st.pyplot(fig)
-
-# Explanation
-st.write("### 🔍 How the AI Works")
+# Educational content
+st.write("---")
+st.write("### 🧠 How This AI Works")
 st.write("""
-- **Training Data**: The AI was trained on 9,000+ projectile motion scenarios
-- **Algorithm**: Uses Random Forest Regressor (ensemble machine learning)
-- **Learning**: Learned the relationship between velocity, angle, and resulting distance
-- **Purpose**: Demonstrates how AI can approximate complex physics calculations
-- **Accuracy**: Shows the difference between AI prediction and exact physics
+**Machine Learning Approach:**
+1. **Training Data**: 1,000+ simulated projectile scenarios
+2. **Algorithm**: Random Forest Regressor (ensemble learning)
+3. **Features**: Velocity + Angle → Predicts Distance
+4. **Learning**: Maps input parameters to output range
+
+**Real-world Applications:**
+- Sports analytics (projectile prediction)
+- Military targeting systems
+- Space mission trajectory planning
+- Robotics and autonomous systems
 """)
