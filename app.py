@@ -34,3 +34,23 @@ st.subheader("Physics Results:")
 st.write(f"Time of flight: {time:.2f} seconds")
 st.write(f"Maximum height: {max(y):.2f} meters") 
 st.write(f"Total distance: {max(x):.2f} meters")
+
+
+# NEW SIMULATION: Spring Mass
+st.markdown("---")
+st.subheader("Spring Mass Simulation")
+
+mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0)
+spring_constant = st.slider("Spring Constant (N/m)", 1, 100, 10)
+
+# Spring physics
+omega = np.sqrt(spring_constant / mass)
+period = 2 * np.pi / omega
+
+st.write(f"Oscillation Period: {period:.2f} seconds")
+st.write(f"Angular Frequency: {omega:.2f} rad/s")
+
+# Show spring compression/extension
+st.subheader("Spring Motion")
+st.progress(0.5)
+st.write("Spring Position")
