@@ -10,17 +10,24 @@ angle = st.slider("Launch Angle (degrees)", 1, 90, 45)
 # Physics calculations
 angle_rad = np.radians(angle)
 g = 9.8
-time_of_flight = 2 * velocity * np.sin(angle_rad) / g
-max_height = (velocity * np.sin(angle_rad))**2 / (2 * g)
-distance = velocity * np.cos(angle_rad) * time_of_flight
+time = 2 * velocity * np.sin(angle_rad) / g
 
-# Display results
+# Calculate trajectory points
+t = np.linspace(0, time, 50)
+x = velocity * np.cos(angle_rad) * t
+y = velocity * np.sin(angle_rad) * t - 0.5 * g * t**2
+
+# Display the chart
+st.subheader("Projectile Trajectory")
+st.line_chart(y)
+
+# Show results
 st.subheader("Physics Results:")
-st.write(f"Time of flight: {time_of_flight:.2f} seconds")
-st.write(f"Maximum height: {max_height:.2f} meters")
-st.write(f"Total distance: {distance:.2f} meters")
+st.write(f"Time of flight: {time:.2f} seconds")
+st.write(f"Maximum height: {max(y):.2f} meters") 
+st.write(f"Total distance: {max(x):.2f} meters")
 
-# Simple visual representation
-st.subheader("Trajectory Preview:")
-st.progress(angle/90)  # Shows angle as progress bar
-st.metric("Power", f"{velocity} m/s")
+# Show the path coordinates
+st.subheader("Flight Path")
+for i in range(0, len(x), 10):
+    st.write(f"Point {i//10 + 1}: ({x[i]:.1f}m, {y[i]:.1f}m)")
