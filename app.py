@@ -55,44 +55,37 @@ st.subheader("Spring Motion")
 st.progress(0.5)
 st.write("Spring Position")
 
-# SPRING VISUALIZATION
+# PYTHON SPRING SIMULATION
 st.markdown("---")
-st.subheader("Spring Visualization")
+st.subheader("Spring Simulation")
 
-mass = st.slider("Mass (kg)", 0.1, 10.0, 1.0, key="mass_spring")
-spring_constant = st.slider("Spring Constant (N/m)", 1, 100, 10, key="spring_const")
-displacement = st.slider("Spring Displacement", -1.0, 1.0, 0.0, 0.1)
+import numpy as np
 
-# Calculate force
-force = -spring_constant * displacement
+mass = st.slider("Mass", 1, 10, 5, key="spring_mass")
+k = st.slider("Spring Constant", 10, 100, 50, key="spring_k")
 
-# Draw spring based on displacement
-st.write("**Spring Position:**")
+# Spring physics
+omega = np.sqrt(k / mass)
+T = 2 * np.pi / omega
 
-if displacement > 0:
-    # Spring stretched down
-    st.code(f"""
-    🟦 Wall
-    {'│' * 8}
-    ⚫ Mass (stretched down)
-    Force: {force:.1f} N upward
-    """)
-elif displacement < 0:
-    # Spring compressed up
-    st.code(f"""
-    🟦 Wall
-    ⚫ Mass (compressed up)
-    {'│' * 8}
-    Force: {force:.1f} N downward
-    """)
-else:
-    # Spring at rest
-    st.code(f"""
-    🟦 Wall
-    {'│' * 8}
-    ⚫ Mass (at rest)
-    Force: {force:.1f} N
-    """)
+st.write(f"Natural Frequency: {omega:.2f} rad/s")
+st.write(f"Period: {T:.2f} seconds")
 
-st.write(f"**Spring Force: {force:.1f} N**")
-st.write(f"*Move the displacement slider to see the spring change!*")
+# Create spring positions for one period
+t = np.linspace(0, T, 20)
+x = np.sin(omega * t)
+
+# Display spring frames
+st.write("**Spring Motion Over One Period:**")
+cols = st.columns(4)
+for i in range(min(4, len(x))):
+    with cols[i]:
+        pos = x[i]
+        # Visual representation
+        if pos > 0.5:
+            st.write("⬇️ Stretched")
+        elif pos < -0.5:
+            st.write("⬆️ Compressed")
+        else:
+            st.write("⚫ Balanced")
+        st.write(f"Pos: {pos:.2f}")
