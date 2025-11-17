@@ -70,7 +70,6 @@ period = 2 * np.pi / omega
 st.write(f"Oscillation Period: {period:.2f} seconds")
 
 # Real-time animation
-import time
 
 if st.button("Start Spring Animation"):
     spring_placeholder = st.empty()
